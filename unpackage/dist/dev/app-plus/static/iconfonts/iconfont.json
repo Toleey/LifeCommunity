@@ -1,0 +1,30 @@
+{
+  "id": "2969987",
+  "name": "lifecommunity",
+  "font_family": "iconfont",
+  "css_prefix_text": "icon-",
+  "description": "",
+  "glyphs": [
+    {
+      "icon_id": "383679",
+      "name": "空心",
+      "font_class": "kongxin",
+      "unicode": "e62e",
+      "unicode_decimal": 58926
+    },
+    {
+      "icon_id": "383686",
+      "name": "实心",
+      "font_class": "shixin",
+      "unicode": "e635",
+      "unicode_decimal": 58933
+    },
+    {
+      "icon_id": "1327070",
+      "name": "修改信息",
+      "font_class": "icon-xiugai",
+      "unicode": "e60b",
+      "unicode_decimal": 58891
+    }
+  ]
+}
