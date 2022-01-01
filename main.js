@@ -3,6 +3,9 @@ import App from './App'
 import request from 'util/request.js'
 Vue.prototype.$request = request
 
+import store from './store'
+Vue.prototype.$store=store
+
 // #ifndef VUE3
 import Vue from 'vue'
 Vue.config.productionTip = false

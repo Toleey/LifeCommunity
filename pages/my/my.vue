@@ -2,22 +2,22 @@
 	<view>
 		
 		<view class="header">
-			<view class="avator">
-				<image src="https://gravatar.zeruns.tech/avatar/2aeb599ab872efb092bce259f75d6154?s=256&d=wavatar"></image>
+			<view class="avator" @click="toUser()">
+				<image :src="user.avator"></image>
 			</view>
-			<view class="userInfo">
+			<view class="userInfo" @click="toUser()">
 				<view class="userInfo-name">
-					<text class="userInfo-name-title">泡泡龙</text>
+					<text class="userInfo-name-title">{{user.userName}}</text>
 					<span class="userInfo-name-icon iconfont icon-icon-xiugai"></span>
 				</view>
 				<view class="userInfo-id">
-					<text>emodId:</text>
-					<text>15</text>
+					<text>lid:</text>
+					<text>{{user.id}}</text>
 				</view>
 				
 			</view>
-			<view class="message">
-				<text class="message-num">0</text>
+			<view class="message" @click="toMessage()">
+				<text class="message-num">{{user.message}}</text>
 				<text class="message-name">消息</text>
 			</view>
 		</view>
@@ -25,30 +25,19 @@
 		<view class="chooseMenu">
 			<view class="post">
 				<text class="post-name">发布</text>
-				<text class="post-num">0</text>
-			</view>
-			<view class="private">
-				<text class="private-name">私有</text>
-				<text class="private-num">0</text>
+				<text class="post-num">{{post}}</text>
 			</view>
 			<view class="like">
 				<text class="like-name">喜欢</text>
-				<text class="like-num">0</text>
+				<text class="like-num">{{like}}</text>
 			</view>
 		</view>
 		
 		<view class="nocontent" v-show="false">暂无作品</view>
 		
-		
 		<view class="content">
-			<view>
-				<image src="https://www.qinqinghu.top/static/dyImgs/7026645239490301217_1636285435380.jpg"></image>
-			</view>
-			<view>
-				<image src="https://www.qinqinghu.top/static/imgs/Re62kcU_1634996356581.jpg"></image>
-			</view>
-			<view>
-				<image src="https://www.qinqinghu.top/static/upload/1635648215296_mmexport1628866204399.jpg"></image>
+			<view v-for="work in workList" @click="toDetail(work.id)">
+				<image :src="work.pic"></image>
 			</view>
 		</view>
 		
@@ -57,11 +46,141 @@
 </template>
 
 <script>
+	import store from '@/store/index.js'
+	import {
+		mapState,
+		mapMutations,
+		mapGetters
+	} from 'vuex'
+	
 	export default {
 		data() {
 			return {
-				
+				phoneNumber:"",
+				post:0,
+				like:0,
+				message:0,
+				user:{},
+				workList:[],
+				likeList:[
+					
+				]
 			};
+		},
+		onLoad() {
+			this.getUser()
+			this.getWorks()
+			this.getWorkCount()
+		},
+		onShow() {
+			if(this.getHasLogin){ //已经登录，放行
+				console.log(this.getHasLogin)
+			}else{ //没登录
+				uni.redirectTo({
+					url:"../login/login"
+				})
+			}
+			this.getUser()
+			this.getWorks()
+			this.getWorkCount()
+		},
+		methods:{
+			...mapMutations(['login', 'logout']),
+			
+			getWorkCount(){
+
+				uni.request({
+					url: "http://127.0.0.1:8088/work/getWorkCountByPhoneNumber",
+					method: "GET",
+					header: {
+						'content-type': "application/x-www-form-urlencoded"
+					},
+					data: {
+						"phoneNumber": this.getPhoneNumber
+					},
+					success: (res) => {
+						this.post = res.data
+						console.log(this.post)
+					},
+					fail: () => {
+						console.log("获取作品方法执行失败了")
+					},
+					complete: () => {
+						console.log("获取作品方法调用执行")
+					}
+				})
+				
+				
+			},
+			
+			getWorks(){
+				
+				uni.request({
+					url: "http://127.0.0.1:8088/work/getAllWorksByPhoneNumber",
+					method: "GET",
+					header: {
+						'content-type': "application/x-www-form-urlencoded"
+					},
+					data: {
+						"phoneNumber": this.getPhoneNumber
+					},
+					success: (res) => {
+						this.workList = res.data
+					},
+					fail: () => {
+						console.log("获取作品方法执行失败了")
+					},
+					complete: () => {
+						console.log("获取作品方法调用执行")
+					}
+				})
+				
+			},
+			getUser(){
+				
+				uni.request({
+					url: "http://127.0.0.1:8088/user/getAUserByPhoneNumber",
+					method: "GET",
+					header: {
+						'content-type': "application/x-www-form-urlencoded"
+					},
+					data: {
+						"phoneNumber": this.getPhoneNumber
+					},
+					success: (res) => {
+						this.user = res.data
+					},
+					fail: () => {
+						console.log("获取用户方法执行失败了")
+					},
+					complete: () => {
+						console.log("获取用户方法调用执行")
+					}
+				})
+				
+			},
+			toDetail(workId){
+				console.log(workId)
+				uni.navigateTo({
+					url: "../detail/detail?id="+workId
+				})
+			},
+			toUser(){
+				uni.navigateTo({
+					url:"../user/user"
+				})
+			},
+			toMessage(){
+				uni.navigateTo({
+					url:"../message/message"
+				})
+			},
+			
+			
+		},
+		computed: {
+			...mapState({}),
+			...mapGetters(['getHasLogin','getPhoneNumber'])
 		}
 	}
 </script>
@@ -74,6 +193,7 @@
 		//border: 1px solid black;
 		display: flex;
 		flex-flow: row nowrap;
+		cursor: pointer;
 		
 		.avator{
 			//border: 1px solid black;
@@ -159,7 +279,7 @@
 		
 		.post{
 			// //border: 1px solid black;
-			width: 250rpx;
+			width: 375rpx;
 			height: 80rpx;
 			line-height: 80rpx;
 			text-align: center;
@@ -176,30 +296,13 @@
 			
 		}
 		
-		.private{
-			//border: 1px solid black;
-			width: 250rpx;
-			height: 80rpx;
-			line-height: 80rpx;
-			text-align: center;
-			
-			.private-name{
-				
-			}
-			
-			.private-num{
-				margin-left: 10rpx;
-				
-			}
-			
-		}
-		
 		.like{
 			//border: 1px solid black;
-			width: 250rpx;
+			width: 375rpx;
 			height: 80rpx;
 			line-height: 80rpx;
 			text-align: center;
+			// border-bottom: 5rpx solid #E70008;
 			
 			.like-name{
 				

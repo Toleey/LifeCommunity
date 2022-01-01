@@ -1,50 +1,45 @@
 <template>
 	<view>
 		
-		<!-- <view v-for="m in messageList"> -->
-			
-			<view class="contentBox" v-for="m in messageList">
-				<swiper class="carsouel" indicator-dots="true" indicator-active-color="rgba(253, 128, 8, 1.0)" autoplay="true" circular="true" >
+			<view class="contentBox">
+				<swiper class="carsouel" :indicator-dots="false" indicator-active-color="rgba(253, 128, 8, 1.0)" autoplay="true" circular="true" >
 					<swiper-item>
-						<image :src="m.pic"></image>
-					</swiper-item>
-					<swiper-item>
-						<image :src="m.pic"></image>
+						<image :src="message.pic"></image>
 					</swiper-item>
 				</swiper>
 			</view>
 			
 			
-			<view class="detailContent" v-for="m in messageList">
-				<view class="title">{{m.title}}</view>
-				<view class="time"><text>{{m.time}}</text></view>
+			<view class="detailContent" >
+				<view class="title">{{message.title}}</view>
+				<view class="time"><text>{{message.createdTime}}</text></view>
 				<view class="user">
 					<view class="user-left">
 						<view class="avator">
-							<image :src="m.avatorImge"></image>
+							<image :src="message.avatorImge"></image>
 						</view>
-						<view class="userName">{{m.userName}}</view>
+						<view class="userName">{{message.userName}}</view>
 					</view>
-					<view class="user-right">
+					<view class="user-right" @click="toWorkLike(message.id)">
 						<span class="iconfont icon-kongxin"></span>
-						<text>{{m.like}}</text>
+						<text>{{message.like}}</text>
 					</view>
 				</view>	
 			
 		
 			
-				<input class="commentInput" placeholder="请输入评论" confirm-type="send" />
+				<input class="commentInput" placeholder="请输入评论" confirm-type="send" @click="toComment()" />
 			
 				<view class="commentContent" v-for="c in commentList">
 					<view class="commentAvator">
-						<image :src="c.avatorImge"></image>
+						<image :src="c.avatorImg"></image>
 					</view>
 					<view class="commentInfo">
 						<view class="commentUserName"><text>{{c.userName}}</text></view>
 						<view class="commentTitle"><text>{{c.content}}</text></view>
-						<view class="commentTime"><text>{{c.time}}</text></view>
+						<view class="commentTime"><text>{{c.createdTime}}</text></view>
 					</view>
-					<view class="commentLike">
+					<view class="commentLike" @click="toCommentLike(c.id)">
 						<span class="iconfont icon-kongxin"></span>
 						<text>{{c.like}}</text>
 					</view>
@@ -54,47 +49,200 @@
 			
 		<!-- </view>  为了照顾list -->
 		
+		<uni-popup ref="popupComment" type="dialog">
+			<uni-popup-dialog mode="input" message="成功消息" :duration="2000" :before-close="true" @close="closeComment"
+				@confirm="confirmComment"></uni-popup-dialog>
+		</uni-popup>
+		
 	</view>
 </template>
 
 <script>
+	import store from '@/store/index.js'
+	import {
+		mapState,
+		mapMutations,
+		mapGetters
+	} from 'vuex'
+	
 	export default {
 		data() {
 			return {
-				messageList:[
-					{
-						id:1,
-						avatorImge:"https://gravatar.zeruns.tech/avatar/5e9fdf300b97d878116e998848aaac71?s=256&d=wavatar",
-						userName:"泡泡龙",
-						pic:"https://www.qinqinghu.top/static/upload/1635648215296_mmexport1628866204399.jpg",
-						title:"真的好有趣，一定要好好地生活啊！",
-						time:"11-14 11:14",
-						like:"1"
-					},
-					
-					
-				],
-				commentList:[
-					{
-						id:1,
-						avatorImge:"https://gravatar.zeruns.tech/avatar/34e44bd7a11be5a7f446e3a3ffdf0bf4?s=256&d=wavatar",
-						userName:"大包子",
-						content:"哈哈，谢谢",
-						time:"11-14 11:14",
-						like:"1"
-					},
-					{
-						id:2,
-						avatorImge:"https://gravatar.zeruns.tech/avatar/34e44bd7a11be5a7f446e3a3ffdf0bf4?s=256&d=wavatar",
-						userName:"大包子",
-						content:"哈哈，谢谢",
-						time:"11-14 11:14",
-						like:"2"
-					},
-				]
-				
+				message:{},
+				commentList:[],
+				work:{}
 			};
+		},
+		onLoad(e){  
+		    this.getAMessage(e)
+			this.getComments(e)
+			this.getWorkId(e)
+		},  
+		onUnload() {  
+		   
+		},
+		methods:{
+			...mapMutations(['login', 'logout']),
+			
+			toCommentLike(commentId){
+				console.log(commentId)
+				if(this.getHasLogin){ //已经登录，放行
+				
+				uni.request({
+					url: "http://127.0.0.1:8088/comment/toLike",
+					method: "GET",
+					header: {
+						'content-type': "application/x-www-form-urlencoded"
+					},
+					data: {
+						"commentId":commentId
+					},
+					success: (res) => {
+						this.getComments(this.work)
+					},
+					fail: () => {
+						console.log("获取方法执行失败了")
+					},
+					complete: () => {
+						console.log("获取方法调用执行")
+					}
+				})
+				
+					
+				}else{ //没登录
+					uni.redirectTo({
+						url:"../login/login"
+					})
+				}
+			},
+			toWorkLike(workId){
+				if(this.getHasLogin){ //已经登录，放行
+					//console.log(workId)
+					
+					uni.request({
+						url: "http://127.0.0.1:8088/work/toLike",
+						method: "GET",
+						header: {
+							'content-type': "application/x-www-form-urlencoded"
+						},
+						data: {
+							"workId":workId
+						},
+						success: (res) => {
+							this.getAMessage(this.work)
+						},
+						fail: () => {
+							console.log("获取方法执行失败了")
+						},
+						complete: () => {
+							console.log("获取方法调用执行")
+						}
+					})
+					
+					
+			
+				}else{ //没登录
+					uni.redirectTo({
+						url:"../login/login"
+					})
+				}
+				
+			},
+			getWorkId(e){
+				this.work=e
+			},
+			toComment(){
+				if(this.getHasLogin){ //已经登录，放行
+					console.log(this.getHasLogin)
+					this.$refs.popupComment.open()
+				}else{ //没登录
+					uni.redirectTo({
+						url:"../login/login"
+					})
+				}
+			},
+			confirmComment(value){
+				console.log(this.workId)
+				
+				uni.request({
+					url: "http://127.0.0.1:8088/comment/addAComment",
+					method: "GET",
+					header: {
+						'content-type': "application/x-www-form-urlencoded"
+					},
+					data: {
+						"workId":this.work.id,
+						"content":value,
+						"phoneNumber":this.getPhoneNumber
+					},
+					success: (res) => {
+						console.log(res)
+						this.getComments(this.work)
+					},
+					fail: () => {
+						console.log("获取方法执行失败了")
+					},
+					complete: () => {
+						console.log("获取方法调用执行")
+					}
+				})
+				
+				this.$refs.popupComment.close()
+			},
+			closeComment(){
+				this.$refs.popupComment.close()
+			},
+			getComments(e){
+				uni.request({
+					url: "http://127.0.0.1:8088/comment/getAWorkComment",
+					method: "GET",
+					header: {
+						'content-type': "application/x-www-form-urlencoded"
+					},
+					data: {
+						"workId":e.id
+					},
+					success: (res) => {
+						this.commentList = res.data
+						console.log(res)
+					},
+					fail: () => {
+						console.log("获取方法执行失败了")
+					},
+					complete: () => {
+						console.log("获取方法调用执行")
+					}
+				})
+			},
+			getAMessage(e){
+				console.log(e.id)
+				uni.request({
+					url: "http://127.0.0.1:8088/work/getAOpus",
+					method: "GET",
+					header: {
+						'content-type': "application/x-www-form-urlencoded"
+					},
+					data: {
+						"id":e.id
+					},
+					success: (res) => {
+						this.message = res.data
+					},
+					fail: () => {
+						console.log("获取方法执行失败了")
+					},
+					complete: () => {
+						console.log("获取方法调用执行")
+					}
+				})
+			}
+			
+		},
+		computed: {
+			...mapState({}),
+			...mapGetters(['getHasLogin','getPhoneNumber'])
 		}
+		
 	}
 </script>
 

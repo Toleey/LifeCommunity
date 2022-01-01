@@ -1,17 +1,17 @@
 <template>
 	<view class="content">
-		
-		<view class="messageBox" v-for="message in messageList" @click="toDetail(id)">
-			
-			<view class="message" >
+
+		<view class="messageBox" v-for="message in messageList" @click="toDetail(message.id)">
+
+			<view class="message">
 				<view class="message-content-user">
 					<view class="avatorImg">
-						<image :src="message.avatorImge"></image>
+						<image :src="message.avatorImg"></image>
 					</view>
 					<view class="userName">
 						<text>{{message.userName}}</text>
 					</view>
-					
+
 				</view>
 				<view class="message-content-pic">
 					<image :src="message.pic"></image>
@@ -21,172 +21,192 @@
 				</view>
 				<view class="message-content-timeAndLike">
 					<view class="time">
-						<text>{{message.time}}</text>
+						<text>{{message.createdTime}}</text>
 					</view>
 					<view class="like">
 						<span class="iconfont icon-kongxin"></span>
 						<text>{{message.like}}</text>
 					</view>
 				</view>
-				
+
 			</view>
-			
-			
+
+
 		</view>
-		
+
 	</view>
 </template>
 
 <script>
+	import store from '@/store/index.js'
+	import {
+		mapState,
+		mapMutations,
+		mapGetters
+	} from 'vuex'
+
 	export default {
 		data() {
 			return {
-				messageList:[
-					{
-						id:1,
-						avatorImge:"https://gravatar.zeruns.tech/avatar/5e9fdf300b97d878116e998848aaac71?s=256&d=wavatar",
-						userName:"泡泡龙",
-						pic:"https://www.qinqinghu.top/static/upload/1635648215296_mmexport1628866204399.jpg",
-						title:"真的好有趣，一定要好好地生活啊！",
-						time:"11-14 11:14",
-						like:"1"
-					},
-					{
-						id:2,
-						avatorImge:"https://gravatar.zeruns.tech/avatar/5e9fdf300b97d878116e998848aaac71?s=256&d=wavatar",
-						userName:"泡泡龙",
-						pic:"https://www.qinqinghu.top/static/upload/1635648215296_mmexport1628866204399.jpg",
-						title:"真的好有趣，一定要好好地生活啊！",
-						time:"11-14 11:14",
-						like:"1"
-					},
-				]
-				
-				
+				messageList: []
 			}
 		},
 		onLoad() {
-
+			this.getMessage()
+		},
+		onShow() {
+			this.getMessage()
 		},
 		methods: {
-			toDetail(id){
+			...mapMutations(['login', 'logout']),
+			
+			getMessage() {
+				uni.request({
+					url: "http://127.0.0.1:8088/work/getOpusForIndex",
+					method: "GET",
+					header: {
+						'content-type': "application/x-www-form-urlencoded"
+					},
+					data: {
+
+					},
+					success: (res) => {
+						this.messageList = res.data
+						console.log(res)
+					},
+					fail: () => {
+						console.log("获取方法执行失败了")
+					},
+					complete: () => {
+						console.log("获取方法调用执行")
+					}
+				})
+			},
+
+
+			toDetail(id) {
 				uni.navigateTo({
-					url:"../detail/detail"
+					url: "../detail/detail?id="+id
 				})
 			}
+
+
+		},
+		computed: {
+			...mapState({}),
+			...mapGetters(['getHasLogin','getPhoneNumber'])
 		}
 	}
 </script>
 
 <style lang="scss">
-	
-	page{
+	page {
 		background-color: #F5F5F5;
 	}
-	
-	.messageBox{
+
+	.messageBox {
 		// border: 1px solid black;
 		width: 100%;
 		height: 720rpx;
 		background-color: white;
 		margin-bottom: 30rpx;
-		
-		
-		
-		.message{
+
+
+
+		.message {
 			// border: 1px solid black;
 			width: 94%;
 			height: 700rpx;
 			margin: 10rpx auto;
 			background-color: white;
-			
-			
-			.message-content-user{
+
+
+			.message-content-user {
 				//border: 1px solid black;
 				width: 100%;
 				height: 100rpx;
 				display: flex;
-				
-				.avatorImg{
+
+				.avatorImg {
 					// //border: 1px solid black;
 					// width: 90rpx;
 					// height: 90rpx;
 					// border-radius: 50%;
-					
-					image{
+
+					image {
 						//border: 1px solid black;
 						width: 90rpx;
 						height: 90rpx;
 						border-radius: 50%;
 					}
-					
+
 				}
-				
-				.userName{
+
+				.userName {
 					//border: 1px solid black;
 					min-width: 400rpx;
 					height: 100rpx;
 					line-height: 100rpx;
 					margin-left: 20rpx;
-					
+
 				}
-				
+
 			}
-			.message-content-pic{
+
+			.message-content-pic {
 				//border: 1px solid black;
 				width: 100%;
 				height: 400rpx;
-				
-				image{
+
+				image {
 					//border: 1px solid black;
 					width: 400rpx;
 					height: 400rpx;
 					border-radius: 5%;
 				}
-				
+
 			}
-			.message-content-title{
+
+			.message-content-title {
 				//border: 1px solid black;
 				width: 100%;
 				height: 100rpx;
-				
-				text{
-					
+
+				text {
+
 					line-height: 100rpx;
 					font-weight: 400;
 					font-size: 36rpx;
 					font-family: '';
-					
+
 				}
-				
+
 			}
-			.message-content-timeAndLike{
+
+			.message-content-timeAndLike {
 				//border: 1px solid black;
 				width: 100%;
 				height: 100rpx;
 				display: flex;
 				justify-content: space-between;
-				
-				
-				.time{
+
+
+				.time {
 					//border: 1px solid black;
-					
-					text{
+
+					text {
 						font-size: 30rpx;
 						color: #878787;
 					}
 				}
-				
-				.like{
+
+				.like {
 					//border: 1px solid black;
 					line-height: 80rpx;
 				}
 			}
-			
+
 		}
-		
+
 	}
-	
-	
-	
 </style>
