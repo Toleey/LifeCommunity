@@ -1,6 +1,8 @@
 <template>
 	<view class="content">
-
+		
+		<!-- <video src="https://www.apple.com/105/media/us/iphone-13-pro/2021/404b23a8-f9c5-466c-b0e6-3d36705b959d/anim/hero/small_2x.mp4"></video> -->
+		
 		<view class="messageBox" v-for="message in messageList" @click="toDetail(message.id)">
 
 			<view class="message">
@@ -21,7 +23,8 @@
 				</view>
 				<view class="message-content-timeAndLike">
 					<view class="time">
-						<text>{{message.createdTime}}</text>
+						<!-- <text>{{message.createdTime}}</text> -->
+						<uni-dateformat :date="message.createdTime" :threshold="[60000, 3600000]"></uni-dateformat>
 					</view>
 					<view class="like">
 						<span class="iconfont icon-kongxin"></span>
@@ -57,9 +60,17 @@
 		onShow() {
 			this.getMessage()
 		},
+		onPullDownRefresh() {
+			console.log('refresh');
+
+			this.getMessage()
+			setTimeout(function() {
+				uni.stopPullDownRefresh();
+			}, 1000);
+		},
 		methods: {
 			...mapMutations(['login', 'logout']),
-			
+
 			getMessage() {
 				uni.request({
 					url: "http://127.0.0.1:8088/work/getOpusForIndex",
@@ -86,7 +97,7 @@
 
 			toDetail(id) {
 				uni.navigateTo({
-					url: "../detail/detail?id="+id
+					url: "../detail/detail?id=" + id
 				})
 			}
 
@@ -94,7 +105,7 @@
 		},
 		computed: {
 			...mapState({}),
-			...mapGetters(['getHasLogin','getPhoneNumber'])
+			...mapGetters(['getHasLogin', 'getPhoneNumber'])
 		}
 	}
 </script>

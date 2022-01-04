@@ -4,7 +4,7 @@
 		<view class="content">
 			<view class="title">欢迎登录</view>
 			<input class="phoneNumber" placeholder="请输入手机号" v-model="phoneNumber" />
-			<view class="sendCode">找回密码</view>
+			<view class="sendCode"><text @click="toPassword()" >找回密码</text></view>
 			<input class="verificationCode" type="password" placeholder="请输入" v-model="password" />
 			<button class="login" type="default" @click="toLogin()">注册/登录</button>
 		</view>
@@ -30,7 +30,12 @@
 		},
 		methods: {
 			...mapMutations(['login', 'logout']),
-
+			
+			toPassword(){
+				uni.navigateTo({
+					url:"../password/password"
+				})
+			},
 			toLogin() {
 				// console.log(this.phoneNumber)
 				// console.log(this.password)

@@ -1,59 +1,65 @@
 <template>
 	<view>
-		
-			<view class="contentBox">
-				<swiper class="carsouel" :indicator-dots="false" indicator-active-color="rgba(253, 128, 8, 1.0)" autoplay="true" circular="true" >
-					<swiper-item>
-						<image :src="message.pic"></image>
-					</swiper-item>
-				</swiper>
-			</view>
-			
-			
-			<view class="detailContent" >
-				<view class="title">{{message.title}}</view>
-				<view class="time"><text>{{message.createdTime}}</text></view>
-				<view class="user">
-					<view class="user-left">
-						<view class="avator">
-							<image :src="message.avatorImge"></image>
-						</view>
-						<view class="userName">{{message.userName}}</view>
+
+		<view class="contentBox">
+			<swiper class="carsouel" :indicator-dots="false" indicator-active-color="rgba(253, 128, 8, 1.0)"
+				autoplay="true" circular="true">
+				<swiper-item>
+					<!-- <swiper-item v-for="(pic,i) in pictureList" :key=i> -->
+					<image @click="toPreview" :src="message.pic"></image>
+					<!-- <image @click="toPreview(pic.pic)" :src="pic.pic"></image> -->
+				</swiper-item>
+			</swiper>
+		</view>
+
+
+		<view class="detailContent">
+			<view class="title">{{message.title}}</view>
+			<!-- <view class="time"><text>{{message.createdTime}}</text></view> -->
+			<uni-dateformat :date="message.createdTime" :threshold="[60000, 3600000]"></uni-dateformat>
+			<view class="user">
+				<view class="user-left">
+					<view class="avator">
+						<image :src="message.avatorImge"></image>
 					</view>
-					<view class="user-right" @click="toWorkLike(message.id)">
-						<span class="iconfont icon-kongxin"></span>
-						<text>{{message.like}}</text>
-					</view>
-				</view>	
-			
-		
-			
-				<input class="commentInput" placeholder="请输入评论" confirm-type="send" @click="toComment()" />
-			
-				<view class="commentContent" v-for="c in commentList">
-					<view class="commentAvator">
-						<image :src="c.avatorImg"></image>
-					</view>
-					<view class="commentInfo">
-						<view class="commentUserName"><text>{{c.userName}}</text></view>
-						<view class="commentTitle"><text>{{c.content}}</text></view>
-						<view class="commentTime"><text>{{c.createdTime}}</text></view>
-					</view>
-					<view class="commentLike" @click="toCommentLike(c.id)">
-						<span class="iconfont icon-kongxin"></span>
-						<text>{{c.like}}</text>
-					</view>
+					<view class="userName">{{message.userName}}</view>
 				</view>
-				
-			</view> <!-- 为了comment距离 -->
-			
+				<view class="user-right" @click="toWorkLike(message.id)">
+					<span class="iconfont icon-kongxin"></span>
+					<text>{{message.like}}</text>
+				</view>
+			</view>
+
+
+
+			<input class="commentInput" placeholder="请输入评论" confirm-type="send" @click="toComment()" />
+
+			<view class="commentContent" v-for="c in commentList">
+				<view class="commentAvator">
+					<image :src="c.avatorImg"></image>
+				</view>
+				<view class="commentInfo">
+					<view class="commentUserName"><text>{{c.userName}}</text></view>
+					<view class="commentTitle"><text>{{c.content}}</text></view>
+					<!-- <view class="commentTime"><text>{{c.createdTime}}</text></view> -->
+					<uni-dateformat :date="c.createdTime" :threshold="[60000, 3600000]"></uni-dateformat>
+				</view>
+				<!-- <view class="commentLike" @click="toCommentLike(c.id)"> -->
+				<view class="commentLike" @click="getCommentIsLike(c.id)">
+					<span class="iconfont icon-kongxin"></span>
+					<text>{{c.like}}</text>
+				</view>
+			</view>
+
+		</view> <!-- 为了comment距离 -->
+
 		<!-- </view>  为了照顾list -->
-		
+
 		<uni-popup ref="popupComment" type="dialog">
 			<uni-popup-dialog mode="input" message="成功消息" :duration="2000" :before-close="true" @close="closeComment"
 				@confirm="confirmComment"></uni-popup-dialog>
 		</uni-popup>
-		
+
 	</view>
 </template>
 
@@ -64,106 +70,269 @@
 		mapMutations,
 		mapGetters
 	} from 'vuex'
-	
+
 	export default {
 		data() {
 			return {
-				message:{},
-				commentList:[],
-				work:{}
+				message: {},
+				commentList: [],
+				work: {},
+				pictureList: [],
+				workLike: 0,
+				commentLike: 0
 			};
 		},
-		onLoad(e){  
-		    this.getAMessage(e)
+		onLoad(e) {
+			this.getAMessage(e)
 			this.getComments(e)
 			this.getWorkId(e)
-		},  
-		onUnload() {  
-		   
+			this.getAllPictures(e)
+			this.getWorkIsLike(e)
 		},
-		methods:{
+		onUnload() {
+
+		},
+		methods: {
 			...mapMutations(['login', 'logout']),
-			
-			toCommentLike(commentId){
-				console.log(commentId)
-				if(this.getHasLogin){ //已经登录，放行
-				
+
+			getCommentIsLike(commentId) {
+
 				uni.request({
-					url: "http://127.0.0.1:8088/comment/toLike",
+					url: "http://127.0.0.1:8088/comment/getCommentIsLike",
 					method: "GET",
 					header: {
 						'content-type': "application/x-www-form-urlencoded"
 					},
 					data: {
-						"commentId":commentId
+						"commentId": commentId,
+						"phoneNumber": this.getPhoneNumber
 					},
 					success: (res) => {
-						this.getComments(this.work)
+						this.commentLike = res.data
+						this.toCommentLike(commentId)
 					},
 					fail: () => {
-						console.log("获取方法执行失败了")
+
 					},
 					complete: () => {
-						console.log("获取方法调用执行")
+
 					}
 				})
-				
-					
-				}else{ //没登录
+
+			},
+
+			getWorkIsLike(e) {
+
+				uni.request({
+					url: "http://127.0.0.1:8088/work/getIsLike",
+					method: "GET",
+					header: {
+						'content-type': "application/x-www-form-urlencoded"
+					},
+					data: {
+						"workId": e.id,
+						"phoneNumber": this.getPhoneNumber
+					},
+					success: (res) => {
+						this.workLike = res.data
+
+					},
+					fail: () => {
+
+					},
+					complete: () => {
+
+					}
+				})
+
+			},
+
+			getAllPictures(e) {
+
+				uni.request({
+					url: "http://127.0.0.1:8088/work/getAllPictures",
+					method: "GET",
+					header: {
+						'content-type': "application/x-www-form-urlencoded"
+					},
+					data: {
+						"workId": e.id
+					},
+					success: (res) => {
+						this.pictureList = res.data
+
+					},
+					fail: () => {
+
+					},
+					complete: () => {
+
+					}
+				})
+
+
+			},
+			toPreview() {
+				uni.previewImage({
+					urls: [this.message.pic]
+
+				})
+			},
+			// toPreview(i){
+			// 	// console.log(this.message.pic)
+			// 	console.log(i)
+
+
+			// 	uni.previewImage({
+			// 		urls:[i]
+
+			// 	})
+			// },
+			toCommentLike(commentId) {
+				// console.log(commentId)
+				if (this.getHasLogin) { //已经登录，放行
+
+					// this.getCommentIsLike(commentId) //调用方法，检查是否点赞
+
+					console.log(this.commentLike)
+
+					if (this.commentLike != 0) { //已经点赞过了，不执行
+						uni.showToast({
+							title: "你已经点过赞了！"
+						})
+					} else { //还没有点赞，可以点赞
+
+						uni.request({
+							url: "http://127.0.0.1:8088/comment/toLike",
+							method: "GET",
+							header: {
+								'content-type': "application/x-www-form-urlencoded"
+							},
+							data: {
+								"commentId": commentId
+							},
+							success: (res) => {
+								this.getComments(this.work)
+
+							},
+							fail: () => {
+
+							},
+							complete: () => {
+
+							}
+						})
+
+						uni.request({
+							url: "http://127.0.0.1:8088/comment/likeThisComment",
+							method: "GET",
+							header: {
+								'content-type': "application/x-www-form-urlencoded"
+							},
+							data: {
+								"commentId": commentId,
+								"phoneNumber": this.getPhoneNumber
+							},
+							success: (res) => {
+								this.getComments(this.work)
+
+							},
+							fail: () => {
+
+							},
+							complete: () => {
+
+							}
+						})
+
+					}
+				} else { //没登录
 					uni.redirectTo({
-						url:"../login/login"
+						url: "../login/login"
 					})
 				}
+
+				this.commentLike = 0
+
 			},
-			toWorkLike(workId){
-				if(this.getHasLogin){ //已经登录，放行
+			toWorkLike(workId) {
+				if (this.getHasLogin) { //已经登录，放行
 					//console.log(workId)
-					
-					uni.request({
-						url: "http://127.0.0.1:8088/work/toLike",
-						method: "GET",
-						header: {
-							'content-type': "application/x-www-form-urlencoded"
-						},
-						data: {
-							"workId":workId
-						},
-						success: (res) => {
-							this.getAMessage(this.work)
-						},
-						fail: () => {
-							console.log("获取方法执行失败了")
-						},
-						complete: () => {
-							console.log("获取方法调用执行")
-						}
-					})
-					
-					
-			
-				}else{ //没登录
+					// console.log(this.workLike)
+					if (this.workLike > 0) { //已经点赞过了，不执行
+						uni.showToast({
+							title: "你已经点过赞了！"
+						})
+					} else { //还没有点赞，可以点赞
+
+
+						uni.request({
+							url: "http://127.0.0.1:8088/work/toLike",
+							method: "GET",
+							header: {
+								'content-type': "application/x-www-form-urlencoded"
+							},
+							data: {
+								"workId": workId
+							},
+							success: (res) => {
+								this.getAMessage(this.work)
+							},
+							fail: () => {
+
+							},
+							complete: () => {
+
+							}
+						})
+
+						uni.request({
+							url: "http://127.0.0.1:8088/work/likeThisWork",
+							method: "GET",
+							header: {
+								'content-type': "application/x-www-form-urlencoded"
+							},
+							data: {
+								"workId": workId,
+								"phoneNumber": this.getPhoneNumber
+							},
+							success: (res) => {
+								this.getAMessage(this.work)
+								this.getWorkIsLike(this.work)
+							},
+							fail: () => {
+
+							},
+							complete: () => {
+
+							}
+						})
+
+
+
+					}
+
+				} else { //没登录
 					uni.redirectTo({
-						url:"../login/login"
+						url: "../login/login"
 					})
 				}
-				
+
 			},
-			getWorkId(e){
-				this.work=e
+			getWorkId(e) {
+				this.work = e
 			},
-			toComment(){
-				if(this.getHasLogin){ //已经登录，放行
-					console.log(this.getHasLogin)
+			toComment() {
+				if (this.getHasLogin) { //已经登录，放行
 					this.$refs.popupComment.open()
-				}else{ //没登录
+				} else { //没登录
 					uni.redirectTo({
-						url:"../login/login"
+						url: "../login/login"
 					})
 				}
 			},
-			confirmComment(value){
-				console.log(this.workId)
-				
+			confirmComment(value) {
+
 				uni.request({
 					url: "http://127.0.0.1:8088/comment/addAComment",
 					method: "GET",
@@ -171,28 +340,28 @@
 						'content-type': "application/x-www-form-urlencoded"
 					},
 					data: {
-						"workId":this.work.id,
-						"content":value,
-						"phoneNumber":this.getPhoneNumber
+						"workId": this.work.id,
+						"content": value,
+						"phoneNumber": this.getPhoneNumber
 					},
 					success: (res) => {
-						console.log(res)
 						this.getComments(this.work)
+						this.commentLike = 0
 					},
 					fail: () => {
-						console.log("获取方法执行失败了")
+
 					},
 					complete: () => {
-						console.log("获取方法调用执行")
+
 					}
 				})
-				
+
 				this.$refs.popupComment.close()
 			},
-			closeComment(){
+			closeComment() {
 				this.$refs.popupComment.close()
 			},
-			getComments(e){
+			getComments(e) {
 				uni.request({
 					url: "http://127.0.0.1:8088/comment/getAWorkComment",
 					method: "GET",
@@ -200,22 +369,22 @@
 						'content-type': "application/x-www-form-urlencoded"
 					},
 					data: {
-						"workId":e.id
+						"workId": e.id
 					},
 					success: (res) => {
 						this.commentList = res.data
-						console.log(res)
+
 					},
 					fail: () => {
-						console.log("获取方法执行失败了")
+
 					},
 					complete: () => {
-						console.log("获取方法调用执行")
+
 					}
 				})
 			},
-			getAMessage(e){
-				console.log(e.id)
+			getAMessage(e) {
+				// console.log(e.id)
 				uni.request({
 					url: "http://127.0.0.1:8088/work/getAOpus",
 					method: "GET",
@@ -223,197 +392,210 @@
 						'content-type': "application/x-www-form-urlencoded"
 					},
 					data: {
-						"id":e.id
+						"id": e.id
 					},
 					success: (res) => {
 						this.message = res.data
 					},
 					fail: () => {
-						console.log("获取方法执行失败了")
+
 					},
 					complete: () => {
-						console.log("获取方法调用执行")
+
 					}
 				})
 			}
-			
+
 		},
 		computed: {
 			...mapState({}),
-			...mapGetters(['getHasLogin','getPhoneNumber'])
+			...mapGetters(['getHasLogin', 'getPhoneNumber'])
 		}
-		
+
 	}
 </script>
 
 <style lang="scss">
-	.contentBox{
-	//border: 1px solid black;
+	.contentBox {
+		//border: 1px solid black;
 		width: 100%;
 		min-height: 300rpx;
-		
-		.carsouel{
-		//border: 1px solid black;
+
+		.carsouel {
+			// border: 1px solid black;
 			width: 100%;
 			min-height: 300rpx;
+
+			image {
+				width: 100%;
+				height: 100%;
+			}
 		}
 	}
-	
-	.detailContent{
-	//border: 1px solid black;
+
+	.detailContent {
+		//border: 1px solid black;
 		margin: 0 auto;
 		width: 720rpx;
-		
-		.title{
+
+		.title {
 			height: 60rpx;
 			line-height: 60rpx;
-		//border: 1px solid black;
+			//border: 1px solid black;
 			font-size: 36rpx;
 			font-weight: 400;
 			font-family: '';
 		}
-		.time{
+
+		.time {
 			height: 45rpx;
 			line-height: 45rpx;
-			text{
+
+			text {
 				font-size: 30rpx;
 				color: #878787;
 			}
 		}
-		.user{
-		//border: 1px solid black;
+
+		.user {
+			//border: 1px solid black;
 			display: flex;
 			justify-content: space-between;
 			height: 80rpx;
 			// background-color: red;
-			
-			.user-left{
-			//border: 1px solid black;
+
+			.user-left {
+				//border: 1px solid black;
 				display: flex;
 				justify-content: space-between;
-				
-				.avator{
-					
-					image{
+
+				.avator {
+
+					image {
 						margin: 5rpx auto;
-					//border: 1px solid black;
+						//border: 1px solid black;
 						width: 60rpx;
 						height: 60rpx;
 						border-radius: 50%;
-					
+
 					}
-					
+
 				}
-				.userName{
+
+				.userName {
 					line-height: 80rpx;
-				//border: 1px solid black;
+					//border: 1px solid black;
 					margin-left: 10rpx;
 					font-size: 35rpx;
 				}
-				
+
 			}
-			
-			.user-right{
-			//border: 1px solid black;
+
+			.user-right {
+				//border: 1px solid black;
 				display: flex;
-				
-				span{
+
+				span {
 					font-size: 40rpx;
 				}
-				
+
 			}
-			
+
 		}
-		
+
 	}
-	
-	.commentInput{
-	//border: 1px solid black;
+
+	.commentInput {
+		//border: 1px solid black;
 		background-color: #F5F5F5;
 		height: 70rpx;
 		border-radius: 5%;
 		margin: 20rpx 0 20rpx 0;
 		padding-left: 20rpx;
 	}
-	
-	.commentContent{
+
+	.commentContent {
 		margin-top: 20rpx;
 		// border: 1px solid black;
 		display: flex;
 		flex-flow: row nowrap;
 		height: 157rpx;
 		width: 100%;
-				
-		.commentAvator{
-		//border: 1px solid black;
+
+		.commentAvator {
+			//border: 1px solid black;
 			display: flex;
 			justify-content: center;
 			// align-items: center;
 			width: 65rpx;
-			
-			image{
-				
+
+			image {
+
 				margin: 3rpx auto;
 				margin-top: 10rpx;
-			//border: 1px solid black;
+				//border: 1px solid black;
 				width: 60rpx;
 				height: 60rpx;
 				border-radius: 50%;
 			}
 		}
-		.commentInfo{
-		//border: 1px solid black;
+
+		.commentInfo {
+			//border: 1px solid black;
 			display: flex;
 			flex-flow: column nowrap;
 			width: 656rpx;
-			
-			
-			.commentUserName{
-			//border: 1px solid black;
+
+
+			.commentUserName {
+				//border: 1px solid black;
 				height: 50rpx;
-				text{
+
+				text {
 					font-size: 34rpx;
 					color: #878787;
 				}
-				
+
 			}
-			.commentTitle{
-			//border: 1px solid black;
+
+			.commentTitle {
+				//border: 1px solid black;
 				height: 60rpx;
 				line-height: 60rpx;
-				text{
+
+				text {
 					font-size: 34rpx;
 					color: black;
 				}
-				
+
 			}
-			.commentTime{
-			//border: 1px solid black;
+
+			.commentTime {
+				//border: 1px solid black;
 				height: 30rpx;
 				line-height: 30rpx;
-				
-				text{
+
+				text {
 					font-size: 30rpx;
 					color: #878787;
 				}
 			}
-			
+
 		}
-		.commentLike{
-		//border: 1px solid black;
+
+		.commentLike {
+			//border: 1px solid black;
 			width: 60rpx;
-			
+
 			display: flex;
 			justify-content: center;
 			align-items: center;
-			
-			span{
+
+			span {
 				font-size: 40rpx;
 			}
-			
-		}
-		
-	}
-	
 
+		}
+
+	}
 </style>

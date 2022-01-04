@@ -4,7 +4,7 @@
 			"path": "pages/index/index",
 			"style": {
 				"navigationBarTitleText": "首页",
-				"enablePullDownRefresh":"",
+				"enablePullDownRefresh":true,
 				"titleNView":false
 			}
 		}
@@ -59,6 +59,16 @@
             "style" :                                                                                    
             {
                 "navigationBarTitleText": "登录",
+                "enablePullDownRefresh": false
+            }
+            
+        }
+      
+        ,{
+            "path" : "pages/password/password",
+            "style" :                                                                                    
+            {
+                "navigationBarTitleText": "找回密码",
                 "enablePullDownRefresh": false
             }
             
