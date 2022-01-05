@@ -40,6 +40,9 @@
 				}else{
 					this.smsCode=Math.random().toString().slice(-6)
 					console.log(this.smsCode)
+					uni.showToast({
+						title:this.smsCode
+					})
 					alert(this.smsCode)
 				}
 				

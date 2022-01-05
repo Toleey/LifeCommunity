@@ -20,7 +20,7 @@
 			<view class="user">
 				<view class="user-left">
 					<view class="avator">
-						<image :src="message.avatorImge"></image>
+						<image :src="message.avatorImg"></image>
 					</view>
 					<view class="userName">{{message.userName}}</view>
 				</view>
@@ -396,6 +396,7 @@
 					},
 					success: (res) => {
 						this.message = res.data
+						console.log(this.message)
 					},
 					fail: () => {
 
